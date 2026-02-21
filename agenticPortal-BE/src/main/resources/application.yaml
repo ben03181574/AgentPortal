@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: agenticPortal
+
+  neo4j:
+    uri: bolt://localhost:7687
+    authentication:
+      username: neo4j
+      password: neo4jpwd
+
+ollama:
+  base-url: http://localhost:11434
+  model-name: gpt-oss:20b # qwen3:8b / deepseek-r1:8b / llama3.1:8b / gpt-oss:20b
+
+#logging:
+#  level:
+#    dev.langchain4j: DEBUG
+#    dev.langchain4j.http: DEBUG
+#    org.springframework.web: DEBUG
+#    org.springframework.web.server: DEBUG
