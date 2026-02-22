@@ -14,6 +14,7 @@ public class SopStepDto {
     public List<NextOption> nextOptions;
 
     public static class NextOption {
+        public String nextStepKey;
         public String conditionType;   // ALWAYS / IF / ELSE
         public String conditionText;
     }

@@ -11,15 +11,11 @@ import java.math.BigDecimal;
 public class RefundDomainTools {
 
 
-    @Tool("檢查指定訂單是否符合退款條件，輸入參數是訂單編號以及價格。")
-    public String checkRefundEligibility(String orderId, BigDecimal amount) {
+    @Tool("檢查指定訂單是否符合退款條件，輸入參數是訂單編號以及價格，輸出是否符合條件。")
+    public Boolean checkRefundEligibility(String orderId, BigDecimal amount) {
         log.info("=== [RefundDomainTools.checkRefundEligibility]，orderId={}, amount={} ===", orderId, amount);
 
-        if (amount.compareTo(BigDecimal.ZERO) > 0 && amount.compareTo(new BigDecimal("1000")) < 0) {
-            return "ELIGIBLE";
-        }
-
-        return "UNELIGIBLE ";
+        return amount.compareTo(BigDecimal.ZERO) > 0 && amount.compareTo(new BigDecimal("1000")) < 0;
     }
 
     @Tool("對指定訂單執行退款。")

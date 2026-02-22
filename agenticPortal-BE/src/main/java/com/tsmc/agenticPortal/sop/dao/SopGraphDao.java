@@ -112,6 +112,7 @@ public class SopGraphDao {
                     Record r = rs.next();
                     if (r.get("targetStepKey").isNull()) continue;
                     SopStepDto.NextOption opt = new SopStepDto.NextOption();
+                    opt.nextStepKey = r.get("targetStepKey").asString("");
                     opt.conditionType = r.get("conditionType").asString("ALWAYS");
                     opt.conditionText = r.get("conditionText").asString("");
                     out.add(opt);

@@ -1,11 +1,10 @@
 MATCH (n) DETACH DELETE n;
 
-// 退款流程（簡化版）
 CREATE (s:SopTemplate {
   code: 'REFUND_FLOW',
   name: '退款流程',
   description: '處理客戶退款申請的標準作業流程',
-  tags: ['退款', '客服']
+  tags: ['退款', '客服', 'refund']
 });
 
 CREATE (st1:SopStep {
