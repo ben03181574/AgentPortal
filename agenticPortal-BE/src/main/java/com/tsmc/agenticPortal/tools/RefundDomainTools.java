@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 public class RefundDomainTools {
 
 
-    @Tool("檢查指定訂單是否符合退款條件，輸入參數是訂單編號以及價格，輸出是否符合條件。")
+    @Tool("檢查指定訂單是否符合退款條件，查看使用者的訂單金額是否符合標準，輸入參數是訂單編號以及價格，輸出是否符合條件。")
     public Boolean checkRefundEligibility(String orderId, BigDecimal amount) {
         log.info("=== [RefundDomainTools.checkRefundEligibility]，orderId={}, amount={} ===", orderId, amount);
 

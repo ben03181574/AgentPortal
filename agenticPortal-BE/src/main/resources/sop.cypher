@@ -47,21 +47,30 @@ CREATE (st5:SopStep {
   order: 4
 });
 
-MATCH (s:SopTemplate {code: 'REFUND_FLOW'}), (st1:SopStep {key: 'REFUND_START'})
-CREATE (s)-[:START_STEP]->(st1),
-       (s)-[:HAS_STEP]->(st1);
+CREATE (st6:SopStep {
+  key: 'SOP END',
+  name: 'SOP END',
+  description: 'SOP END',
+  stepType: 'END',
+  order: 5
+});
 
 MATCH (s:SopTemplate {code: 'REFUND_FLOW'}), (st2:SopStep {key: 'CHECK_ELIGIBILITY'}),
       (st3:SopStep {key: 'DO_REFUND'}), (st4:SopStep {key: 'REJECT_REFUND'}),
-      (st5:SopStep {key: 'NOTIFY_USER'}), (st1:SopStep {key: 'REFUND_START'})
-CREATE (s)-[:HAS_STEP]->(st2),
+      (st5:SopStep {key: 'NOTIFY_USER'}), (st1:SopStep {key: 'REFUND_START'}),
+      (st6:SopStep {key: 'SOP END'})
+CREATE (s)-[:START_STEP]->(st1),
+       (s)-[:HAS_STEP]->(st1),
+       (s)-[:HAS_STEP]->(st2),
        (s)-[:HAS_STEP]->(st3),
        (s)-[:HAS_STEP]->(st4),
        (s)-[:HAS_STEP]->(st5),
+       (s)-[:HAS_STEP]->(st6),
        (st1)-[:NEXT {conditionType: 'ALWAYS', conditionText: ''}]->(st2),
        (st2)-[:NEXT {conditionType: 'IF', conditionText: '訂單符合退款條件'}]->(st3),
        (st2)-[:NEXT {conditionType: 'ELSE', conditionText: '訂單不符合退款條件'}]->(st4),
        (st3)-[:NEXT {conditionType: 'ALWAYS', conditionText: ''}]->(st5),
-       (st4)-[:NEXT {conditionType: 'ALWAYS', conditionText: ''}]->(st5);
+       (st4)-[:NEXT {conditionType: 'ALWAYS', conditionText: ''}]->(st5),
+       (st5)-[:NEXT {conditionType: 'ALWAYS', conditionText: ''}]->(st6);
 
 MATCH (n) RETURN n;

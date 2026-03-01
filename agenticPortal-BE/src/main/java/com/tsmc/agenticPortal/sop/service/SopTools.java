@@ -1,7 +1,8 @@
 package com.tsmc.agenticPortal.sop.service;
 
-import com.tsmc.agenticPortal.sop.dao.SopGraphDao;
-import com.tsmc.agenticPortal.sop.dto.SopStepDto;
+import com.tsmc.agenticPortal.sop.dao.SopGraphDAO;
+import com.tsmc.agenticPortal.sop.dto.SopStepDTO;
+import com.tsmc.agenticPortal.sop.dto.SopStepInfoDTO;
 import com.tsmc.agenticPortal.sop.dto.SopTemplateSummary;
 import com.tsmc.agenticPortal.sop.runtime.SopExecutionState;
 import com.tsmc.agenticPortal.sop.runtime.SopStateStore;
@@ -16,10 +17,10 @@ import java.util.List;
 @Component
 public class SopTools {
 
-    private final SopGraphDao dao;
+    private final SopGraphDAO dao;
     private final SopStateStore stateStore;
 
-    public SopTools(SopGraphDao dao, SopStateStore stateStore) {
+    public SopTools(SopGraphDAO dao, SopStateStore stateStore) {
         this.dao = dao;
         this.stateStore = stateStore;
     }
@@ -33,21 +34,60 @@ public class SopTools {
     }
 
     @Tool("在此對話中開始執行某個 SOP（會把目前步驟設定為起始步驟）。")
-    public SopStepDto startSop(@ToolMemoryId String conversationId, String sopCode) {
+    public SopStepInfoDTO startSop(@ToolMemoryId String conversationId, String sopCode) {
+        SopStepDTO start = dao.getStartStep(sopCode);
         SopExecutionState st = stateStore.getOrCreate(conversationId);
-        SopStepDto start = dao.getStartStep(sopCode);
         st.sopCode = sopCode;
         st.currentStepKey = start.stepKey;
         st.completed = false;
         log.info("=== [startSop] conversationId={}, sopCode={}, startStep={} ===", conversationId, sopCode, start.stepKey);
-        return start;
+
+        SopStepInfoDTO stepInfo = new SopStepInfoDTO();
+        stepInfo.sopStepDTO = start;
+        stepInfo.sopExecutionState = st;
+        return stepInfo;
     }
 
-    @Tool("取得目前 SOP 執行狀態（目前 sopCode、目前步驟、已收集參數 vars）。")
-    public SopExecutionState getState(@ToolMemoryId String conversationId) {
-        SopExecutionState sopExecutionState = stateStore.getOrCreate(conversationId);
-        log.info("=== [getState] conversationId={} , sopExecutionState={} ===", conversationId, sopExecutionState.toString());
-        return sopExecutionState;
+    @Tool("取得目前步驟內容（含下一步分支 nextOptions）。")
+    public SopStepInfoDTO getCurrentStep(@ToolMemoryId String conversationId) {
+        SopExecutionState st = stateStore.getOrCreate(conversationId);
+        if (st.sopCode == null || st.currentStepKey == null) {
+            throw new IllegalStateException("No SOP started in this conversation.");
+        }
+        SopStepDTO step = dao.getStep(st.sopCode, st.currentStepKey);
+        log.info("=== [getCurrentStep] conversationId={}, sopCode={}, currentStepKey={} ===", conversationId, st.sopCode, st.currentStepKey);
+
+        SopStepInfoDTO stepInfo = new SopStepInfoDTO();
+        stepInfo.sopStepDTO = step;
+        stepInfo.sopExecutionState = st;
+        return stepInfo;
+    }
+
+    @Tool("前進到下一步：更新目前步驟為指定 stepKey，並回傳該步驟內容（含分支）。")
+    public SopStepInfoDTO gotoStep(@ToolMemoryId String conversationId, String stepKey) {
+        SopExecutionState st = stateStore.getOrCreate(conversationId);
+        if (st.sopCode == null) {
+            throw new IllegalStateException("No SOP started in this conversation.");
+        }
+        SopStepDTO step = dao.getStep(st.sopCode, stepKey);
+        if (step.stepType.equals("END")){
+            st.completed = true;
+        }
+        st.currentStepKey = stepKey;
+        log.info("=== [gotoStep] conversationId={}, sopCode={}, stepKey={} ===", conversationId, st.sopCode, stepKey);
+
+        SopStepInfoDTO stepInfo = new SopStepInfoDTO();
+        stepInfo.sopStepDTO = step;
+        stepInfo.sopExecutionState = st;
+        return stepInfo;
+    }
+
+    @Tool("結束此 SOP（標記完成）。")
+    public String completeSop(@ToolMemoryId String conversationId) {
+        SopExecutionState st = stateStore.getOrCreate(conversationId);
+        st.completed = true;
+        log.info("=== [completeSop] conversationId={}, sopCode={} ===", conversationId, st.sopCode);
+        return "COMPLETED " + st.sopCode + "SOP";
     }
 
     @Tool("把使用者提供的資訊存到 SOP 執行狀態（例如 orderId、reason、amount）。")
@@ -56,42 +96,5 @@ public class SopTools {
         st.vars.put(key, value);
         log.info("=== [putVar] conversationId={}, {}={} ===", conversationId, key, value);
         return "OK";
-    }
-
-    @Tool("取得目前步驟內容（含下一步分支 nextOptions）。")
-    public SopStepDto getCurrentStep(@ToolMemoryId String conversationId) {
-        SopExecutionState st = stateStore.getOrCreate(conversationId);
-        log.info("=== [getCurrentStep] conversationId={}, sopCode={}, currentStepKey={} ===", conversationId, st.sopCode, st.currentStepKey);
-        if (st.sopCode == null || st.currentStepKey == null) {
-            throw new IllegalStateException("No SOP started in this conversation.");
-        }
-        return dao.getStep(st.sopCode, st.currentStepKey);
-    }
-
-    @Tool("前進到下一步：更新目前步驟為指定 stepKey，並回傳該步驟內容（含分支）。")
-    public SopStepDto gotoStep(@ToolMemoryId String conversationId, String stepKey) {
-        SopExecutionState st = stateStore.getOrCreate(conversationId);
-        if (st.sopCode == null) {
-            throw new IllegalStateException("No SOP started in this conversation.");
-        }
-        SopStepDto dto = dao.getStep(st.sopCode, stepKey);
-        st.currentStepKey = stepKey;
-        log.info("=== [gotoStep] conversationId={}, sopCode={}, stepKey={} ===",
-                conversationId, st.sopCode, stepKey);
-        return dto;
-    }
-
-    @Tool("結束此 SOP（標記完成）。")
-    public String completeSop(@ToolMemoryId String conversationId) {
-        SopExecutionState st = stateStore.getOrCreate(conversationId);
-        st.completed = true;
-        log.info("=== [completeSop] conversationId={}, sopCode={} ===", conversationId, st.sopCode);
-        return "COMPLETED";
-    }
-
-    @Tool("清除此對話的 SOP 狀態（重新開始用）。")
-    public String resetSop(@ToolMemoryId String conversationId) {
-        stateStore.clear(conversationId);
-        return "RESET_OK";
     }
 }

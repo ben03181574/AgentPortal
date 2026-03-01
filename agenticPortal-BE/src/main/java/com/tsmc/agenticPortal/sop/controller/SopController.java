@@ -1,7 +1,7 @@
 package com.tsmc.agenticPortal.sop.controller;
 
-import com.tsmc.agenticPortal.sop.dao.SopGraphDao;
-import com.tsmc.agenticPortal.sop.dto.SopStepDto;
+import com.tsmc.agenticPortal.sop.dao.SopGraphDAO;
+import com.tsmc.agenticPortal.sop.dto.SopStepDTO;
 import com.tsmc.agenticPortal.sop.dto.SopTemplateSummary;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,9 +11,9 @@ import java.util.List;
 @RequestMapping("/api/v1/sop")
 public class SopController {
 
-    private final SopGraphDao dao;
+    private final SopGraphDAO dao;
 
-    public SopController(SopGraphDao dao) {
+    public SopController(SopGraphDAO dao) {
         this.dao = dao;
     }
 
@@ -23,7 +23,7 @@ public class SopController {
     }
 
     @GetMapping("/getStartStep")
-    public SopStepDto getStartStep(@RequestParam(required = false) String sopCode) {
+    public SopStepDTO getStartStep(@RequestParam(required = false) String sopCode) {
         return dao.getStartStep(sopCode);
     }
 }

@@ -10,7 +10,7 @@ spring:
 
 ollama:
   base-url: http://localhost:11434
-  model-name: gpt-oss:20b # qwen3:8b / gpt-oss:20b
+  model-name: gpt-oss:20b # qwen3:32b / gpt-oss:20b
 
 #logging:
 #  level:
