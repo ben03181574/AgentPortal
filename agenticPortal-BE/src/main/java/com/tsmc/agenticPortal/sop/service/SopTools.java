@@ -40,6 +40,7 @@ public class SopTools {
         st.sopCode = sopCode;
         st.currentStepKey = start.stepKey;
         st.completed = false;
+        st.vars.clear();
         log.info("=== [startSop] conversationId={}, sopCode={}, startStep={} ===", conversationId, sopCode, start.stepKey);
 
         SopStepInfoDTO stepInfo = new SopStepInfoDTO();
@@ -70,9 +71,6 @@ public class SopTools {
             throw new IllegalStateException("No SOP started in this conversation.");
         }
         SopStepDTO step = dao.getStep(st.sopCode, stepKey);
-        if (step.stepType.equals("END")){
-            st.completed = true;
-        }
         st.currentStepKey = stepKey;
         log.info("=== [gotoStep] conversationId={}, sopCode={}, stepKey={} ===", conversationId, st.sopCode, stepKey);
 
@@ -85,6 +83,17 @@ public class SopTools {
     @Tool("結束此 SOP（標記完成）。")
     public String completeSop(@ToolMemoryId String conversationId) {
         SopExecutionState st = stateStore.getOrCreate(conversationId);
+        if (st.sopCode == null || st.currentStepKey == null) {
+            throw new IllegalStateException("No SOP started in this conversation.");
+        }
+
+        SopStepDTO currentStep = dao.getStep(st.sopCode, st.currentStepKey);
+        if (!"END".equals(currentStep.stepType)) {
+            throw new IllegalStateException(
+                    "SOP cannot be completed before reaching END step. currentStep=" + st.currentStepKey
+            );
+        }
+
         st.completed = true;
         log.info("=== [completeSop] conversationId={}, sopCode={} ===", conversationId, st.sopCode);
         return "COMPLETED " + st.sopCode + "SOP";

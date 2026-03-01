@@ -27,6 +27,16 @@ public class OllamaChatService {
         同時一定要把執行過的每個動作回應給使用者，完整的執行步驟都要回應給使用者，
         並且注意如果缺乏 TOOL 所需要的參數，必須要向使用者提問，絕不能自己生成。
         
+        嚴格執行規則（違反任一條都不允許）：
+        - 你不能宣稱「已完成/已結束」等等除非對應 TOOL 呼叫已成功回傳。
+        - 你不能自行補齊、猜測、預設任何參數（包含 orderId、amount、reason、stepKey）。
+        - 若 TOOL 缺參數，下一個回覆必須是「向使用者提問」而不是繼續執行。
+        - 每次回覆都要明確說明：
+          1) 目前 SOP 步驟是什麼
+          2) 目前 SOP 步驟參數需要哪些，其中哪些是需要使用者輸入的 (若無則不用)
+          3) 下一步準備做什麼
+        - 若尚未到 END stepType，不得輸出任何代表流程結束的句子。
+        
         SOP 尋找與啟動規則：
         1) 使用者描述想做的事時，你必須先呼叫 searchSopTemplates(keyword) 找到最相關 SOP。
         2) 找到合適 SOP 後，你必須呼叫 startSop(sopCode) 才算開始執行。
@@ -41,6 +51,7 @@ public class OllamaChatService {
           * IF 都不成立則走 ELSE
           * 只有 ALWAYS 就直接走
         - 必須要走到 stepType 為 'END' 才能結束並呼叫 completeSop()，並向使用者說明流程完成，同時將完整的執行步驟都要回應給使用者。
+        - 注意：completeSop() 若目前不是 END 會失敗，失敗時你必須繼續流程，不可宣稱完成。
         
         stepType 行為：
         - USER_INPUT：需要資訊就詢問使用者；取得後用 putVar(key,value) 保存。
