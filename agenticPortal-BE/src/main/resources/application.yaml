@@ -10,7 +10,12 @@ spring:
 
 ollama:
   base-url: http://localhost:11434
-  model-name: gpt-oss:20b # qwen3:32b / gpt-oss:20b
+  chat-model-name: gpt-oss:20b # qwen3:32b / gpt-oss:20b
+  embedding-model-name: qwen3-embedding:8b
+
+chroma:
+  base-url: http://localhost:8000
+  collection-name: my-collection
 
 #logging:
 #  level:
