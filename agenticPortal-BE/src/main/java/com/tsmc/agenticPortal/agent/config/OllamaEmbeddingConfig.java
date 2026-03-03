@@ -18,7 +18,7 @@ public class OllamaEmbeddingConfig {
     private String embeddingModelName;
 
     @Bean
-    public EmbeddingModel ollamaEmbeddingModel() {
+    public OllamaEmbeddingModel ollamaEmbeddingModel() {
         return OllamaEmbeddingModel.builder()
                 .baseUrl(baseUrl)
                 .modelName(embeddingModelName)

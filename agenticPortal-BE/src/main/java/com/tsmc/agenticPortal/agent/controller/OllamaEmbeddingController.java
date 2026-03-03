@@ -12,14 +12,14 @@ import java.util.List;
 @RequestMapping("/api/v1/ollama")
 public class OllamaEmbeddingController {
 
-    private final OllamaEmbeddingService embeddingService;
+    private final OllamaEmbeddingService ollamaEmbeddingService;
 
     public OllamaEmbeddingController(OllamaEmbeddingService embeddingService) {
-        this.embeddingService = embeddingService;
+        this.ollamaEmbeddingService = embeddingService;
     }
 
     @GetMapping("/embedding")
     public List<Float> embed(@RequestParam("text") String text) {
-        return embeddingService.embed(text).vectorAsList();
+        return ollamaEmbeddingService.embed(text).vectorAsList();
     }
 }
