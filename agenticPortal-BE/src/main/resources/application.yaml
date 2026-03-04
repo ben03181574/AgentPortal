@@ -15,7 +15,9 @@ ollama:
 
 chroma:
   base-url: http://localhost:8000
-  collection-name: my-collection
+  tenant-name: default_tenant
+  database-name: default_database
+  collection-name: my_collection
 
 #logging:
 #  level:

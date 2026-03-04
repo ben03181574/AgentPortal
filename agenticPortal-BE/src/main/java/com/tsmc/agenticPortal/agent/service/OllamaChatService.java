@@ -2,6 +2,7 @@ package com.tsmc.agenticPortal.agent.service;
 
 import com.tsmc.agenticPortal.sop.service.SopTools;
 import com.tsmc.agenticPortal.tools.RefundDomainTools;
+import com.tsmc.agenticPortal.tools.SearchTools;
 import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.StreamingChatModel;
@@ -79,11 +80,12 @@ public class OllamaChatService {
 
     public OllamaChatService(StreamingChatModel streamingChatModel,
                              SopTools sopTools,
-                             RefundDomainTools refundDomainTools) {
+                             RefundDomainTools refundDomainTools,
+                             SearchTools searchTools) {
         this.assistant = AiServices.builder(Assistant.class)
                 .streamingChatModel(streamingChatModel)
                 .chatMemoryProvider(this::memory)
-                .tools(sopTools, refundDomainTools)
+                .tools(sopTools, refundDomainTools, searchTools)
                 .build();
     }
 

@@ -3,7 +3,6 @@ package com.tsmc.agenticPortal.agent.controller;
 import com.tsmc.agenticPortal.agent.service.OllamaChatService;
 import com.tsmc.agenticPortal.agent.dto.OllamaChatRequestDTO;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;

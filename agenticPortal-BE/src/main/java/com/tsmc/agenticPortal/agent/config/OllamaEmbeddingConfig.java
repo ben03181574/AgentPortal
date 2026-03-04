@@ -23,7 +23,7 @@ public class OllamaEmbeddingConfig {
                 .baseUrl(baseUrl)
                 .modelName(embeddingModelName)
                 .timeout(Duration.ofSeconds(60))
-                .logRequests(true)
+                .logRequests(false)
                 .logResponses(false)
                 .build();
     }

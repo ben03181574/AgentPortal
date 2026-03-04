@@ -24,7 +24,8 @@ public class OllamaChatConfig {
                 .modelName(modelName)
                 .temperature(0.0)
                 .timeout(java.time.Duration.ofSeconds(60))
-                .logRequests(true)
+                .logRequests(false)
+                .logResponses(false)
                 .customHeaders(Map.of("Content-Type", "application/json;charset=UTF-8"))
                 .build();
     }
