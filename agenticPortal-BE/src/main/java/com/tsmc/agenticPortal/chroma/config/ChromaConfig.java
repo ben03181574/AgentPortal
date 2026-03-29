@@ -32,8 +32,8 @@ public class ChromaConfig  {
                 .tenantName(tenantName)
                 .databaseName(databaseName)
                 .collectionName(collectionName)
-                .logRequests(true)
-                .logResponses(true)
+                .logRequests(false)
+                .logResponses(false)
                 .build();
     }
 }

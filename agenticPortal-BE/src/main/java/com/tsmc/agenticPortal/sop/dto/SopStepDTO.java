@@ -11,12 +11,4 @@ public class SopStepDTO {
     public String name;
     public String description;
     public String stepType;
-    public List<NextOption> nextOptions;
-
-    @Data
-    public static class NextOption {
-        public String nextStepKey;
-        public String conditionType;   // ALWAYS / IF / ELSE
-        public String conditionText;
-    }
 }

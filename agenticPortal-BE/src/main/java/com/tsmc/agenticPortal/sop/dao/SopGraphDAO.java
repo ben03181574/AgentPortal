@@ -1,7 +1,6 @@
 package com.tsmc.agenticPortal.sop.dao;
 
 import com.tsmc.agenticPortal.sop.dto.SopStepDTO;
-import com.tsmc.agenticPortal.sop.dto.SopTemplateSummary;
 import org.neo4j.driver.*;
 import org.neo4j.driver.Record;
 import org.springframework.stereotype.Component;
@@ -18,42 +17,6 @@ public class SopGraphDAO {
         this.driver = driver;
     }
 
-    public List<SopTemplateSummary> searchTemplates(String keyword, int limit) {
-        String q = keyword == null ? "" : keyword.trim();
-        if (q.isEmpty()) return List.of();
-
-        String cypher = """
-        MATCH (t:SopTemplate)
-        WHERE toLower(t.name) CONTAINS toLower($q)
-           OR toLower(t.description) CONTAINS toLower($q)
-           OR any(tag IN t.tags WHERE toLower(tag) CONTAINS toLower($q))
-        RETURN t.code AS code,
-               t.name AS name,
-               t.description AS description,
-               t.tags AS tags
-        LIMIT $limit
-    """;
-
-        try (Session session = driver.session()) {
-            return session.executeRead(tx -> {
-                var rs = tx.run(cypher, Values.parameters("q", q, "limit", limit));
-                List<SopTemplateSummary> out = new ArrayList<>();
-
-                while (rs.hasNext()) {
-                    Record r = rs.next();
-                    SopTemplateSummary s = new SopTemplateSummary();
-                    s.code = r.get("code").asString(null);
-                    s.name = r.get("name").asString(null);
-                    s.description = r.get("description").asString(null);
-                    s.tags = r.get("tags").isNull()
-                            ? List.of()
-                            : r.get("tags").asList(Value::asString);
-                    out.add(s);
-                }
-                return out;
-            });
-        }
-    }
 
     public SopStepDTO getStartStep(String sopCode) {
         String cypher = """
@@ -84,40 +47,29 @@ public class SopGraphDAO {
                    s.stepType AS stepType
         """;
 
+        return getSopStepDTO(sopCode, stepKey, cypher);
+    }
+
+    public SopStepDTO getNextStep(String sopCode, String stepKey) {
+        String cypher = """
+            MATCH (t:SopTemplate {code: $code})-[:HAS_STEP]->(s:SopStep {key: $key})
+            OPTIONAL MATCH (s)-[r:NEXT]->(n:SopStep)
+            RETURN t.code AS sopCode,
+                   n.key AS stepKey,
+                   n.name AS name,
+                   n.description AS description,
+                   n.stepType AS stepType
+        """;
+
+        return getSopStepDTO(sopCode, stepKey, cypher);
+    }
+
+    private SopStepDTO getSopStepDTO(String sopCode, String stepKey, String cypher) {
         try (Session session = driver.session()) {
             return session.executeRead(tx -> {
                 var rs = tx.run(cypher, Values.parameters("code", sopCode, "key", stepKey));
                 if (!rs.hasNext()) throw new IllegalArgumentException("Step not found: " + sopCode + " / " + stepKey);
                 return getSopStepDTO(rs);
-            });
-        }
-    }
-
-    public List<SopStepDTO.NextOption> getNextOptions(String sopCode, String stepKey) {
-        String cypher = """
-            MATCH (t:SopTemplate {code: $code})-[:HAS_STEP]->(s:SopStep {key: $key})
-            OPTIONAL MATCH (s)-[r:NEXT]->(n:SopStep)
-            RETURN n.key AS targetStepKey,
-                   n.name AS targetName,
-                   r.conditionType AS conditionType,
-                   r.conditionText AS conditionText
-        """;
-
-        try (Session session = driver.session()) {
-            return session.executeRead(tx -> {
-                var rs = tx.run(cypher, Values.parameters("code", sopCode, "key", stepKey));
-                List<SopStepDTO.NextOption> out = new ArrayList<>();
-
-                while (rs.hasNext()) {
-                    Record r = rs.next();
-                    if (r.get("targetStepKey").isNull()) continue;
-                    SopStepDTO.NextOption opt = new SopStepDTO.NextOption();
-                    opt.nextStepKey = r.get("targetStepKey").asString("");
-                    opt.conditionType = r.get("conditionType").asString("ALWAYS");
-                    opt.conditionText = r.get("conditionText").asString("");
-                    out.add(opt);
-                }
-                return out;
             });
         }
     }
@@ -131,7 +83,6 @@ public class SopGraphDAO {
         dto.name = r.get("name").asString(null);
         dto.description = r.get("description").asString(null);
         dto.stepType = r.get("stepType").asString(null);
-        dto.nextOptions = getNextOptions(dto.sopCode, dto.stepKey);
         return dto;
     }
 }

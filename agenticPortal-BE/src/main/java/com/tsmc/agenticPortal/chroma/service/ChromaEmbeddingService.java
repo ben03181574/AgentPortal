@@ -1,6 +1,7 @@
 package com.tsmc.agenticPortal.chroma.service;
 
 import com.tsmc.agenticPortal.agent.service.OllamaEmbeddingService;
+import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
@@ -10,22 +11,29 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
-public class EmbeddingService {
+public class ChromaEmbeddingService {
 
     private final OllamaEmbeddingService ollamaEmbeddingService;
     private final EmbeddingStore<TextSegment> chromaEmbeddingStore;
 
-    public EmbeddingService(OllamaEmbeddingService ollamaEmbeddingService, EmbeddingStore<TextSegment> chromaEmbeddingStore) {
+    public ChromaEmbeddingService(
+            OllamaEmbeddingService ollamaEmbeddingService,
+            EmbeddingStore<TextSegment> chromaEmbeddingStore) {
         this.ollamaEmbeddingService = ollamaEmbeddingService;
         this.chromaEmbeddingStore = chromaEmbeddingStore;
     }
 
-    public void add(String text) {
+    public void add(String text, Map<String, Object> metadata) {
+
         Embedding embedding = ollamaEmbeddingService.embed(text);
-        chromaEmbeddingStore.add(embedding, TextSegment.from(text));
+
+        TextSegment segment = TextSegment.from(text, new Metadata(metadata));
+
+        chromaEmbeddingStore.add(embedding, segment);
     }
 
     public String search(String text) {
@@ -47,8 +55,8 @@ public class EmbeddingService {
 
         log.info("Embedding match score: {}", embeddingMatch.score());
         log.info("Embedding match text: {}", embeddingMatch.embedded().text());
+        log.info("Embedding match sopCode: {}", embeddingMatch.embedded().metadata().getString("sopCode"));
 
-        return "Found!! Doc content: " + embeddingMatch.embedded().text();
-
+        return String.format("Found! SOP Code: %s", embeddingMatch.embedded().metadata().getString("sopCode"));
     }
 }
