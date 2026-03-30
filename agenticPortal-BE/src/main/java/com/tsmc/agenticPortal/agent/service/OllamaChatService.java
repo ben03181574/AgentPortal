@@ -5,6 +5,9 @@ import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.service.*;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -106,15 +109,31 @@ public class OllamaChatService {
         
         You are NOT the workflow engine.
         You are ONLY the decision-maker of whether to use the workflow engine.
+        {{systemMessage}}
         """)
         Flux<String> chat(@MemoryId String conversationId,
                           @V("systemMessage") String systemMessage,
                           @UserMessage String userMessage);
     }
 
+    private final MeterRegistry meterRegistry;
+    private final Counter chatRequestCounter;
+    private final Timer chatTimer;
+
+
     public OllamaChatService(
             StreamingChatModel streamingChatModel,
-            SopTools sopTools) {
+            SopTools sopTools,
+            MeterRegistry meterRegistry) {
+
+        this.meterRegistry = meterRegistry;
+        this.chatRequestCounter = Counter.builder("agentportal_chat_requests_total")
+                .description("Total chat requests")
+                .register(meterRegistry);
+        this.chatTimer = Timer.builder("agentportal_chat_latency")
+                .description("Chat end-to-end latency")
+                .register(meterRegistry);
+
         this.assistant = AiServices.builder(Assistant.class)
                 .streamingChatModel(streamingChatModel)
                 .chatMemoryProvider(this::memory)
@@ -123,6 +142,9 @@ public class OllamaChatService {
     }
 
     public Flux<String> chat(String conversationId, String systemMessage, String userMessage) {
-        return assistant.chat(conversationId, systemMessage, userMessage);
+        chatRequestCounter.increment();
+        Timer.Sample sample = Timer.start(meterRegistry);
+        return assistant.chat(conversationId, systemMessage, userMessage)
+                .doOnTerminate(() -> sample.stop(chatTimer));
     }
 }

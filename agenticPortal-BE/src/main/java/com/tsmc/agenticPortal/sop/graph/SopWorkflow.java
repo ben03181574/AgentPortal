@@ -49,7 +49,7 @@ public class SopWorkflow {
         SopStepDTO sopStepDTO = sopGraphDAO.getStep(state.sopCode(), state.stepKey());
 
         String stepResult  = String.format(
-                "Step Name: %s\nStep Result: %s\n",
+                "Step Name: %s, Step Result: %s",
                 sopStepDTO.name,
                 sopExecutionService.execute(
                         state.conversationId(),

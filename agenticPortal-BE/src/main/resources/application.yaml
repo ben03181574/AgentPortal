@@ -19,6 +19,17 @@ chroma:
   database-name: default_database
   collection-name: my_collection
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      access: unrestricted
+
 #logging:
 #  level:
 #    dev.langchain4j: DEBUG
