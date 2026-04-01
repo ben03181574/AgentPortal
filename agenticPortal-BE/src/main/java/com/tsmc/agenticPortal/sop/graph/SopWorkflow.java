@@ -11,7 +11,7 @@ import org.bsc.langgraph4j.CompileConfig;
 import org.bsc.langgraph4j.CompiledGraph;
 import org.bsc.langgraph4j.GraphStateException;
 import org.bsc.langgraph4j.StateGraph;
-import org.bsc.langgraph4j.checkpoint.MemorySaver;
+import org.bsc.langgraph4j.checkpoint.BaseCheckpointSaver;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -20,6 +20,7 @@ import static org.bsc.langgraph4j.GraphDefinition.END;
 import static org.bsc.langgraph4j.GraphDefinition.START;
 import static org.bsc.langgraph4j.action.AsyncEdgeAction.edge_async;
 import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
+
 @Slf4j
 @Component
 public class SopWorkflow {
@@ -27,15 +28,19 @@ public class SopWorkflow {
     private final SopGraphDAO sopGraphDAO;
     private final SopExecutionService sopExecutionService;
     private final SopRouterService sopRouterService;
+    private final BaseCheckpointSaver checkpointSaver;
+
     @Getter
     private CompiledGraph<SopState> graph;
 
     public SopWorkflow(SopGraphDAO sopGraphDAO,
                        SopExecutionService sopExecutionService,
-                       SopRouterService sopRouterService) {
+                       SopRouterService sopRouterService,
+                       BaseCheckpointSaver checkpointSaver) {
         this.sopGraphDAO = sopGraphDAO;
         this.sopExecutionService = sopExecutionService;
         this.sopRouterService = sopRouterService;
+        this.checkpointSaver = checkpointSaver;
     }
 
     @PostConstruct
@@ -43,13 +48,13 @@ public class SopWorkflow {
         this.graph = buildGraphInternal();
     }
 
-    private Map<String,Object> doAction(SopState state) {
+    private Map<String, Object> doAction(SopState state) {
         log.info("---Do SOP Action---");
 
         SopStepDTO sopStepDTO = sopGraphDAO.getStep(state.sopCode(), state.stepKey());
 
-        String stepResult  = String.format(
-                "Step Name: %s, Step Result: %s",
+        String stepResult = String.format(
+                "Step Name: %s%nStep Result: %s%n",
                 sopStepDTO.name,
                 sopExecutionService.execute(
                         state.conversationId(),
@@ -70,19 +75,19 @@ public class SopWorkflow {
         );
     }
 
-    private Map<String,Object> routeStep(SopState state) {
+    private Map<String, Object> routeStep(SopState state) {
         log.info("---Route SOP Step---");
 
         return Map.of();
     }
 
-    private Map<String,Object> userInput(SopState state) {
+    private Map<String, Object> userInput(SopState state) {
         log.info("---User Input SOP Step---");
 
         return Map.of();
     }
 
-    private Map<String,Object> updateStep(SopState state) {
+    private Map<String, Object> updateStep(SopState state) {
         log.info("---Update SOP Step---");
 
         SopStepDTO sopStepDTO = sopGraphDAO.getNextStep(state.sopCode(), state.stepKey());
@@ -91,7 +96,8 @@ public class SopWorkflow {
 
         return Map.of(
                 "stepKey", sopStepDTO.stepKey,
-                "userMessage", "請幫我執行 SOP");
+                "userMessage", "請幫我執行 SOP"
+        );
     }
 
     private String isDone(SopState state) {
@@ -99,7 +105,7 @@ public class SopWorkflow {
 
         SopRouterService.RouteType type = sopRouterService.route(state.stepResult());
 
-        if (type.equals(SopRouterService.RouteType.USER_INPUT)) {
+        if (SopRouterService.RouteType.USER_INPUT.equals(type)) {
             return "user_input";
         }else {
             return "continue";
@@ -121,7 +127,7 @@ public class SopWorkflow {
     private CompiledGraph<SopState> buildGraphInternal() throws GraphStateException {
 
         var compileConfig = CompileConfig.builder()
-                .checkpointSaver(new MemorySaver())
+                .checkpointSaver(checkpointSaver)
                 .interruptAfter("user_input")
                 .releaseThread(true)
                 .build();

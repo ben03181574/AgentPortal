@@ -1,6 +1,6 @@
 package com.tsmc.agenticPortal.agent.service;
 
-import com.tsmc.agenticPortal.tools.MachineTools;
+import com.tsmc.agenticPortal.tools.RefundMockTools;
 import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.StreamingChatModel;
@@ -91,11 +91,11 @@ public class SopExecutionService{
 
     public SopExecutionService(
             StreamingChatModel streamingChatModel,
-            MachineTools machineTools) {
+            RefundMockTools refundMockTools) {
         this.assistantSOP = AiServices.builder(AssistantSOP.class)
                 .streamingChatModel(streamingChatModel)
                 .chatMemoryProvider(this::memory)
-                .tools(machineTools)
+                .tools(refundMockTools)
                 .build();
     }
 
