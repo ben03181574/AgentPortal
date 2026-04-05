@@ -1,4 +1,4 @@
-package com.tsmc.agenticPortal.agent.service;
+package com.tsmc.agenticPortal.core.service;
 
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.output.structured.Description;
@@ -65,7 +65,7 @@ public class SopRouterService {
         - Return ONLY structured result
         - Do NOT explain
         """)
-        RouteResult route(@UserMessage String stepResult);
+        Result<RouteResult> route(@UserMessage String stepResult);
     }
 
     public SopRouterService(ChatModel chatModel) {
@@ -75,8 +75,8 @@ public class SopRouterService {
     }
 
     public RouteType route(String stepResult) {
-        RouteResult result = assistantRouter.route(stepResult);
-        log.info("=== [SopRouter] decision: {} ===", result.action);
-        return result.action;
+        Result<RouteResult> result = assistantRouter.route(stepResult);
+        log.info("=== [SopRouter] decision: {}, reason: {} ===", result.content().action, result.finishReason());
+        return result.content().action;
     }
 }

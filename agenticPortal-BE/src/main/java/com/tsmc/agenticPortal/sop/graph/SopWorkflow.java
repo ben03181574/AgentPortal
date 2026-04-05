@@ -1,7 +1,7 @@
 package com.tsmc.agenticPortal.sop.graph;
 
-import com.tsmc.agenticPortal.agent.service.SopExecutionService;
-import com.tsmc.agenticPortal.agent.service.SopRouterService;
+import com.tsmc.agenticPortal.core.service.SopExecutionService;
+import com.tsmc.agenticPortal.core.service.SopRouterService;
 import com.tsmc.agenticPortal.sop.dao.SopGraphDAO;
 import com.tsmc.agenticPortal.sop.dto.SopStepDTO;
 import jakarta.annotation.PostConstruct;

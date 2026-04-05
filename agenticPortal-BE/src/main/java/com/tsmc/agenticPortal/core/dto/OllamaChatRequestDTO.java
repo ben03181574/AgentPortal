@@ -1,4 +1,4 @@
-package com.tsmc.agenticPortal.agent.dto;
+package com.tsmc.agenticPortal.core.dto;
 
 import lombok.Data;
 import jakarta.validation.constraints.NotBlank;

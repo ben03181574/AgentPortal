@@ -1,4 +1,4 @@
-package com.tsmc.agenticPortal.agent.service;
+package com.tsmc.agenticPortal.core.service;
 
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.model.ollama.OllamaEmbeddingModel;

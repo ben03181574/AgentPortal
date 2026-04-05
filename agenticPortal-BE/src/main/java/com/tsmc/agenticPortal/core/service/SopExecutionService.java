@@ -1,4 +1,4 @@
-package com.tsmc.agenticPortal.agent.service;
+package com.tsmc.agenticPortal.core.service;
 
 import com.tsmc.agenticPortal.tools.RefundMockTools;
 import dev.langchain4j.memory.ChatMemory;
@@ -100,6 +100,10 @@ public class SopExecutionService{
     }
 
     public String execute(String conversationId, String sopCode, String stepName, String stepDescription, String userMessage) {
-        return assistantSOP.execute(conversationId, sopCode, stepName, stepDescription, userMessage).collectList().map(list -> String.join("", list)).block();
+        return assistantSOP.execute(conversationId, sopCode, stepName, stepDescription, userMessage)
+                .collectList()
+                .map(list -> String.join("", list))
+                .retry(3)
+                .block();
     }
 }

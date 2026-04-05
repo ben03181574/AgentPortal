@@ -1,14 +1,11 @@
 package com.tsmc.agenticPortal.chroma.controller;
 
-import com.tsmc.agenticPortal.agent.dto.OllamaChatRequestDTO;
 import com.tsmc.agenticPortal.chroma.dto.ChromaEmbeddingRequestDTO;
 import com.tsmc.agenticPortal.chroma.service.ChromaEmbeddingService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Flux;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController

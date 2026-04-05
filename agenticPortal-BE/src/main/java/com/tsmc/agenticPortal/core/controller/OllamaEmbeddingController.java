@@ -1,6 +1,6 @@
-package com.tsmc.agenticPortal.agent.controller;
+package com.tsmc.agenticPortal.core.controller;
 
-import com.tsmc.agenticPortal.agent.service.OllamaEmbeddingService;
+import com.tsmc.agenticPortal.core.service.OllamaEmbeddingService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;

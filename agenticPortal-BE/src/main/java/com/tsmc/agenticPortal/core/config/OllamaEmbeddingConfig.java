@@ -1,4 +1,4 @@
-package com.tsmc.agenticPortal.agent.config;
+package com.tsmc.agenticPortal.core.config;
 
 import dev.langchain4j.model.ollama.OllamaEmbeddingModel;
 import org.springframework.beans.factory.annotation.Value;

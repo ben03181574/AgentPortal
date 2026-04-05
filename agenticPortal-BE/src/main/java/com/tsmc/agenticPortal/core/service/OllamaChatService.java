@@ -1,4 +1,4 @@
-package com.tsmc.agenticPortal.agent.service;
+package com.tsmc.agenticPortal.core.service;
 
 import com.tsmc.agenticPortal.tools.SopTools;
 import dev.langchain4j.memory.ChatMemory;
@@ -9,8 +9,10 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -111,7 +113,7 @@ public class OllamaChatService {
         You are ONLY the decision-maker of whether to use the workflow engine.
         {{systemMessage}}
         """)
-        Flux<String> chat(@MemoryId String conversationId,
+        TokenStream chat(@MemoryId String conversationId,
                           @V("systemMessage") String systemMessage,
                           @UserMessage String userMessage);
     }
@@ -141,10 +143,81 @@ public class OllamaChatService {
                 .build();
     }
 
-    public Flux<String> chat(String conversationId, String systemMessage, String userMessage) {
+    public Flux<ServerSentEvent<String>> chat(String conversationId, String systemMessage, String userMessage) {
         chatRequestCounter.increment();
         Timer.Sample sample = Timer.start(meterRegistry);
-        return assistant.chat(conversationId, systemMessage, userMessage)
-                .doOnTerminate(() -> sample.stop(chatTimer));
+
+        return Flux.<ServerSentEvent<String>>create(sink -> {
+            try {
+                TokenStream tokenStream = assistant.chat(conversationId, systemMessage, userMessage);
+                tokenStream
+                    .onPartialThinking(partialThinking -> {
+                        if(!sink.isCancelled()) {
+                            sink.next(
+                                ServerSentEvent.<String>builder()
+                                    .event("thinking")
+                                    .data(partialThinking.text())
+                                    .build()
+                            );
+                        }
+                    })
+                    .beforeToolExecution(before -> {
+                        if (!sink.isCancelled()) {
+                            sink.next(
+                                ServerSentEvent.<String>builder()
+                                    .event("status")
+                                    .data(before.request().name())
+                                    .build()
+                            );
+                        }
+                    })
+                    .onToolExecuted(toolExecution -> {
+                        if (!sink.isCancelled()) {
+                            sink.next(
+                                ServerSentEvent.<String>builder()
+                                    .event("status")
+                                    .data(toolExecution.request().name()+" successful executed!")
+                                    .build()
+                            );
+                        }
+                    })
+                    .onPartialResponse(token -> {
+                        if (!sink.isCancelled()) {
+                            sink.next(
+                                ServerSentEvent.<String>builder()
+                                    .event("token")
+                                    .data(token)
+                                    .build());
+                        }
+                    })
+                    .onCompleteResponse(response -> {
+                        if (!sink.isCancelled()) {
+                            sink.next(
+                                ServerSentEvent.<String>builder()
+                                    .event("done")
+                                    .data("[DONE]")
+                                    .build());
+                            sink.complete();
+                        }
+                        sample.stop(chatTimer);
+                    })
+                    .onError(error -> {
+                        log.error("Streaming chat failed", error);
+                        if (!sink.isCancelled()) {
+                            sink.next(
+                                ServerSentEvent.<String>builder()
+                                    .event("error")
+                                    .data(error.getMessage())
+                                    .build());
+                            sink.complete();
+                        }
+                        sample.stop(chatTimer);
+                    })
+                    .start();
+            }catch (Exception e) {
+                sample.stop(chatTimer);
+                sink.error(e);
+            }
+        }, FluxSink.OverflowStrategy.BUFFER);
     }
 }

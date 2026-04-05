@@ -1,9 +1,10 @@
-package com.tsmc.agenticPortal.agent.controller;
+package com.tsmc.agenticPortal.core.controller;
 
-import com.tsmc.agenticPortal.agent.service.OllamaChatService;
-import com.tsmc.agenticPortal.agent.dto.OllamaChatRequestDTO;
+import com.tsmc.agenticPortal.core.service.OllamaChatService;
+import com.tsmc.agenticPortal.core.dto.OllamaChatRequestDTO;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
@@ -18,7 +19,7 @@ public class OllamaChatController {
     }
 
     @PostMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> chat(@Valid @RequestBody OllamaChatRequestDTO req) {
+    public Flux<ServerSentEvent<String>> chat(@Valid @RequestBody OllamaChatRequestDTO req) {
         return ollamaChatService.chat(req.getMemoryId(), req.getSystemMessage(), req.getUserMessage());
     }
 }

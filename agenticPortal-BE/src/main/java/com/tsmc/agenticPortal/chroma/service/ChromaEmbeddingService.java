@@ -1,6 +1,6 @@
 package com.tsmc.agenticPortal.chroma.service;
 
-import com.tsmc.agenticPortal.agent.service.OllamaEmbeddingService;
+import com.tsmc.agenticPortal.core.service.OllamaEmbeddingService;
 import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;

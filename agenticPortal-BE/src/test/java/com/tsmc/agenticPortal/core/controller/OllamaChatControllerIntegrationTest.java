@@ -1,6 +1,6 @@
-package com.tsmc.agenticPortal.agent.controller;
+package com.tsmc.agenticPortal.core.controller;
 
-import com.tsmc.agenticPortal.agent.dto.OllamaChatRequestDTO;
+import com.tsmc.agenticPortal.core.dto.OllamaChatRequestDTO;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;

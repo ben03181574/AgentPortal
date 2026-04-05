@@ -1,4 +1,4 @@
-package com.tsmc.agenticPortal.agent.config;
+package com.tsmc.agenticPortal.core.config;
 
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
@@ -9,6 +9,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.Map;
+
+import static dev.langchain4j.model.chat.request.ResponseFormat.JSON;
 
 @Configuration
 public class OllamaChatConfig {
@@ -24,6 +26,8 @@ public class OllamaChatConfig {
         return OllamaStreamingChatModel.builder()
                 .baseUrl(baseUrl)
                 .modelName(modelName)
+                .think(true)
+                .returnThinking(true)
                 .temperature(0.0)
                 .timeout(java.time.Duration.ofSeconds(60))
                 .logRequests(false)
@@ -37,6 +41,7 @@ public class OllamaChatConfig {
         return OllamaChatModel.builder()
                 .baseUrl(baseUrl)
                 .modelName(modelName)
+                .responseFormat(JSON)
                 .temperature(0.0)
                 .timeout(java.time.Duration.ofSeconds(60))
                 .logRequests(false)
