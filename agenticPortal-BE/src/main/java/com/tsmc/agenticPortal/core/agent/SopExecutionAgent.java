@@ -1,5 +1,6 @@
-package com.tsmc.agenticPortal.core.service;
+package com.tsmc.agenticPortal.core.agent;
 
+import com.tsmc.agenticPortal.core.agent.memory.SopExecutionMemoryStore;
 import com.tsmc.agenticPortal.tools.RefundMockTools;
 import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
@@ -14,14 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
-public class SopExecutionService{
-
-    private final Map<String, ChatMemory> memories = new ConcurrentHashMap<>();
-    private ChatMemory memory(Object memoryId) {
-        String id = String.valueOf(memoryId);
-        log.info("=== [memory] memoryId: {} ===", id);
-        return memories.computeIfAbsent(id, k -> MessageWindowChatMemory.withMaxMessages(50));
-    }
+public class SopExecutionAgent {
 
     private final AssistantSOP assistantSOP;
     private interface AssistantSOP {
@@ -55,7 +49,7 @@ public class SopExecutionService{
         --------------------------------
         
         - If the step requires input → call the corresponding tool with the user input.
-        - If the input is missing → still call the tool and let the tool handle it.
+        - If the input is missing → call the tool once, and then return the result.
         - If the step is an action → call the action tool.
         
         --------------------------------
@@ -89,18 +83,24 @@ public class SopExecutionService{
                           @UserMessage String userMessage);
     }
 
-    public SopExecutionService(
+    public SopExecutionAgent(
+            SopExecutionMemoryStore sopExecutionMemoryStore,
             StreamingChatModel streamingChatModel,
             RefundMockTools refundMockTools) {
         this.assistantSOP = AiServices.builder(AssistantSOP.class)
                 .streamingChatModel(streamingChatModel)
-                .chatMemoryProvider(this::memory)
+                .chatMemoryProvider(
+                        memoryId -> MessageWindowChatMemory.builder()
+                                .id(memoryId)
+                                .maxMessages(50)
+                                .chatMemoryStore(sopExecutionMemoryStore)
+                                .build())
                 .tools(refundMockTools)
                 .build();
     }
 
     public String execute(String conversationId, String sopCode, String stepName, String stepDescription, String userMessage) {
-        return assistantSOP.execute(conversationId, sopCode, stepName, stepDescription, userMessage)
+        return Flux.defer(() -> assistantSOP.execute(conversationId, sopCode, stepName, stepDescription, userMessage))
                 .collectList()
                 .map(list -> String.join("", list))
                 .retry(3)

@@ -1,4 +1,4 @@
-package com.tsmc.agenticPortal.core.config;
+package com.tsmc.agenticPortal.core.agent.config;
 
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;

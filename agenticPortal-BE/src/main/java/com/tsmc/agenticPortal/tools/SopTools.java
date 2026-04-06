@@ -43,7 +43,6 @@ public class SopTools {
         log.info("=== [SopTools.executeSop] execute start, sopCode={} ===", sopCode);
 
         SopStepDTO startStep = dao.getStartStep(sopCode);
-        log.info("startStep={}", startStep);
 
         CompiledGraph<SopState> graph = sopWorkflow.getGraph();
 
@@ -84,12 +83,6 @@ public class SopTools {
         String sopResult = "";
 
         for (NodeOutput<SopState> r : result) {
-
-            log.info("======== SOP NODE ========");
-            log.info("node={}", r.node());
-            log.info("stepResult={}", r.state().stepResult());
-            log.info("==========================");
-
             sopResult = r.state().sopResult();
         }
 

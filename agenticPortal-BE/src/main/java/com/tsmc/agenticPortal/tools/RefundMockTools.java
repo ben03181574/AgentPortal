@@ -31,7 +31,7 @@ public class RefundMockTools {
                 Refundable: YES
                 """.formatted(orderId);
 
-        log.info("=== [RefundMockTools.mockFindOrderByOrderId] success, result={} ===", result);
+        log.info("=== [RefundMockTools.mockFindOrderByOrderId] success===");
         return result;
     }
 
@@ -58,7 +58,7 @@ public class RefundMockTools {
                 Note: This refund reason matches the mock validation rules.
                 """.formatted(normalized);
 
-        log.info("=== [RefundMockTools.mockValidateRefundReason] success, result={} ===", result);
+        log.info("=== [RefundMockTools.mockValidateRefundReason] success===");
         return result;
     }
 
@@ -91,7 +91,7 @@ public class RefundMockTools {
                 Refund Status: SUCCESS
                 """.formatted(orderId, reason, refundNo);
 
-        log.info("=== [RefundMockTools.mockExecuteRefund] success, result={} ===", result);
+        log.info("=== [RefundMockTools.mockExecuteRefund] success===");
         return result;
     }
 
@@ -115,7 +115,7 @@ public class RefundMockTools {
                 Settlement Status: COMPLETED
                 """.formatted(refundTransactionId);
 
-        log.info("=== [RefundMockTools.mockQueryRefundResult] success, result={} ===", result);
+        log.info("=== [RefundMockTools.mockQueryRefundResult] success===");
         return result;
     }
 }

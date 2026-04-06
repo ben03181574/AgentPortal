@@ -1,5 +1,6 @@
-package com.tsmc.agenticPortal.core.service;
+package com.tsmc.agenticPortal.core.agent;
 
+import com.tsmc.agenticPortal.core.agent.memory.OllamaChatMemoryStore;
 import com.tsmc.agenticPortal.tools.SopTools;
 import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
@@ -19,14 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
-public class OllamaChatService {
-
-    private final Map<String, ChatMemory> memories = new ConcurrentHashMap<>();
-    private ChatMemory memory(Object memoryId) {
-        String id = String.valueOf(memoryId);
-        log.info("=== [memory] memoryId: {} ===", id);
-        return memories.computeIfAbsent(id, k -> MessageWindowChatMemory.withMaxMessages(50));
-    }
+public class OllamaChatAgent {
 
     private final Assistant assistant;
     private interface Assistant {
@@ -123,7 +117,8 @@ public class OllamaChatService {
     private final Timer chatTimer;
 
 
-    public OllamaChatService(
+    public OllamaChatAgent(
+            OllamaChatMemoryStore ollamaChatMemoryStore,
             StreamingChatModel streamingChatModel,
             SopTools sopTools,
             MeterRegistry meterRegistry) {
@@ -138,7 +133,12 @@ public class OllamaChatService {
 
         this.assistant = AiServices.builder(Assistant.class)
                 .streamingChatModel(streamingChatModel)
-                .chatMemoryProvider(this::memory)
+                .chatMemoryProvider(
+                        memoryId -> MessageWindowChatMemory.builder()
+                                .id(memoryId)
+                                .maxMessages(50)
+                                .chatMemoryStore(ollamaChatMemoryStore)
+                                .build())
                 .tools(sopTools)
                 .build();
     }

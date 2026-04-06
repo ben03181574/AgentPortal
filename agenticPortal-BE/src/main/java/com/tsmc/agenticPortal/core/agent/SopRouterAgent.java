@@ -1,4 +1,4 @@
-package com.tsmc.agenticPortal.core.service;
+package com.tsmc.agenticPortal.core.agent;
 
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.output.structured.Description;
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class SopRouterService {
+public class SopRouterAgent {
 
     public enum RouteType {
         USER_INPUT,
@@ -68,7 +68,7 @@ public class SopRouterService {
         Result<RouteResult> route(@UserMessage String stepResult);
     }
 
-    public SopRouterService(ChatModel chatModel) {
+    public SopRouterAgent(ChatModel chatModel) {
         this.assistantRouter = AiServices.builder(AssistantRouter.class)
                 .chatModel(chatModel)
                 .build();
@@ -76,7 +76,7 @@ public class SopRouterService {
 
     public RouteType route(String stepResult) {
         Result<RouteResult> result = assistantRouter.route(stepResult);
-        log.info("=== [SopRouter] decision: {}, reason: {} ===", result.content().action, result.finishReason());
+        log.info("=== [SopRouter.route] decision: {}===", result.content().action);
         return result.content().action;
     }
 }

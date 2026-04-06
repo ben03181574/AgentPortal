@@ -2,7 +2,6 @@ package com.tsmc.agenticPortal.sop.config;
 
 import org.bsc.langgraph4j.checkpoint.BaseCheckpointSaver;
 import org.bsc.langgraph4j.checkpoint.CreateOption;
-import org.bsc.langgraph4j.checkpoint.MysqlSaver;
 import org.bsc.langgraph4j.checkpoint.RedisSaver;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

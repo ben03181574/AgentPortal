@@ -1,7 +1,7 @@
 package com.tsmc.agenticPortal.sop.graph;
 
-import com.tsmc.agenticPortal.core.service.SopExecutionService;
-import com.tsmc.agenticPortal.core.service.SopRouterService;
+import com.tsmc.agenticPortal.core.agent.SopExecutionAgent;
+import com.tsmc.agenticPortal.core.agent.SopRouterAgent;
 import com.tsmc.agenticPortal.sop.dao.SopGraphDAO;
 import com.tsmc.agenticPortal.sop.dto.SopStepDTO;
 import jakarta.annotation.PostConstruct;
@@ -26,20 +26,20 @@ import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 public class SopWorkflow {
 
     private final SopGraphDAO sopGraphDAO;
-    private final SopExecutionService sopExecutionService;
-    private final SopRouterService sopRouterService;
+    private final SopExecutionAgent sopExecutionAgent;
+    private final SopRouterAgent sopRouterAgent;
     private final BaseCheckpointSaver checkpointSaver;
 
     @Getter
     private CompiledGraph<SopState> graph;
 
     public SopWorkflow(SopGraphDAO sopGraphDAO,
-                       SopExecutionService sopExecutionService,
-                       SopRouterService sopRouterService,
+                       SopExecutionAgent sopExecutionAgent,
+                       SopRouterAgent sopRouterAgent,
                        BaseCheckpointSaver checkpointSaver) {
         this.sopGraphDAO = sopGraphDAO;
-        this.sopExecutionService = sopExecutionService;
-        this.sopRouterService = sopRouterService;
+        this.sopExecutionAgent = sopExecutionAgent;
+        this.sopRouterAgent = sopRouterAgent;
         this.checkpointSaver = checkpointSaver;
     }
 
@@ -56,7 +56,7 @@ public class SopWorkflow {
         String stepResult = String.format(
                 "Step Name: %s%nStep Result: %s%n",
                 sopStepDTO.name,
-                sopExecutionService.execute(
+                sopExecutionAgent.execute(
                         state.conversationId(),
                         sopStepDTO.sopCode,
                         sopStepDTO.name,
@@ -101,11 +101,11 @@ public class SopWorkflow {
     }
 
     private String isDone(SopState state) {
-        log.info("---Check if the SOP step: {} has been done, step result: {}---", state.stepKey(), state.stepResult());
+        log.info("---Check if the SOP step: {} has been done---", state.stepKey());
 
-        SopRouterService.RouteType type = sopRouterService.route(state.stepResult());
+        SopRouterAgent.RouteType type = sopRouterAgent.route(state.stepResult());
 
-        if (SopRouterService.RouteType.USER_INPUT.equals(type)) {
+        if (SopRouterAgent.RouteType.USER_INPUT.equals(type)) {
             return "user_input";
         }else {
             return "continue";

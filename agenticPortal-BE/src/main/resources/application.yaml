@@ -8,6 +8,10 @@ spring:
     password: rootpwd
     driver-class-name: org.mariadb.jdbc.Driver
 
+  jpa:
+    hibernate:
+      ddl-auto: update
+
   neo4j:
     uri: bolt://localhost:7687
     authentication:
@@ -27,7 +31,7 @@ chroma:
 
 agentportal:
   checkpoint:
-    type: redis
+    type: mariadb
     mariadb:
       create-option: CREATE_IF_NOT_EXISTS
     redis:
