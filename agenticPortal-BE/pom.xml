@@ -8,11 +8,11 @@
 		<version>3.5.10</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.tsmc</groupId>
+	<groupId>com.pckuow</groupId>
 	<artifactId>agenticPortal-BE</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>agenticPortal</name>
-	<description>Agentic Portal for TSMC Fab IT</description>
+	<description>Agentic Portal for Executing Sop</description>
 	<url/>
 	<licenses>
 		<license/>
