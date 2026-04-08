@@ -15,10 +15,8 @@ public class RefundMockTools {
             and return mock order information.
             """)
     public String mockFindOrderByOrderId(String orderId) {
-        log.info("=== [RefundMockTools.mockFindOrderByOrderId] start, orderId={} ===", orderId);
 
         if (orderId == null || orderId.isBlank()) {
-            log.info("=== [RefundMockTools.mockFindOrderByOrderId] invalid orderId ===");
             return "Order lookup failed: orderId must not be empty.";
         }
 
@@ -30,8 +28,6 @@ public class RefundMockTools {
                 Order Amount: 1000
                 Refundable: YES
                 """.formatted(orderId);
-
-        log.info("=== [RefundMockTools.mockFindOrderByOrderId] success===");
         return result;
     }
 
@@ -42,10 +38,8 @@ public class RefundMockTools {
             and return whether the reason is acceptable.
             """)
     public String mockValidateRefundReason(String reason) {
-        log.info("=== [RefundMockTools.mockValidateRefundReason] start, reason={} ===", reason);
 
         if (reason == null || reason.isBlank()) {
-            log.info("=== [RefundMockTools.mockValidateRefundReason] invalid reason ===");
             return "Refund reason validation failed: reason must not be empty.";
         }
 
@@ -58,7 +52,6 @@ public class RefundMockTools {
                 Note: This refund reason matches the mock validation rules.
                 """.formatted(normalized);
 
-        log.info("=== [RefundMockTools.mockValidateRefundReason] success===");
         return result;
     }
 
@@ -69,15 +62,12 @@ public class RefundMockTools {
             and returns a mock refund execution result without calling any real external system.
             """)
     public String mockExecuteRefund(String orderId, String reason) {
-        log.info("=== [RefundMockTools.mockExecuteRefund] start, orderId={}, reason={} ===", orderId, reason);
 
         if (orderId == null || orderId.isBlank()) {
-            log.info("=== [RefundMockTools.mockExecuteRefund] failed, empty orderId ===");
             return "Refund execution failed: orderId must not be empty.";
         }
 
         if (reason == null || reason.isBlank()) {
-            log.info("=== [RefundMockTools.mockExecuteRefund] failed, empty reason ===");
             return "Refund execution failed: reason must not be empty.";
         }
 
@@ -91,7 +81,6 @@ public class RefundMockTools {
                 Refund Status: SUCCESS
                 """.formatted(orderId, reason, refundNo);
 
-        log.info("=== [RefundMockTools.mockExecuteRefund] success===");
         return result;
     }
 
@@ -101,10 +90,8 @@ public class RefundMockTools {
             if you want to confirm the final refund status.
             """)
     public String mockQueryRefundResult(String refundTransactionId) {
-        log.info("=== [RefundMockTools.mockQueryRefundResult] start, refundTransactionId={} ===", refundTransactionId);
 
         if (refundTransactionId == null || refundTransactionId.isBlank()) {
-            log.info("=== [RefundMockTools.mockQueryRefundResult] invalid refundTransactionId ===");
             return "Refund query failed: refundTransactionId must not be empty.";
         }
 
@@ -115,7 +102,6 @@ public class RefundMockTools {
                 Settlement Status: COMPLETED
                 """.formatted(refundTransactionId);
 
-        log.info("=== [RefundMockTools.mockQueryRefundResult] success===");
         return result;
     }
 }

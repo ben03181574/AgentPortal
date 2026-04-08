@@ -1,6 +1,7 @@
 package com.pckuow.agenticPortal.core.agent;
 
 import com.pckuow.agenticPortal.core.agent.memory.OllamaChatMemoryStore;
+import com.pckuow.agenticPortal.core.logging.TraceContextHolder;
 import com.pckuow.agenticPortal.tools.SopTools;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.StreamingChatModel;
@@ -8,6 +9,8 @@ import dev.langchain4j.service.*;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.tracing.Span;
+import io.micrometer.tracing.Tracer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
@@ -113,12 +116,15 @@ public class OllamaChatAgent {
     private final Counter chatRequestCounter;
     private final Timer chatTimer;
 
+    private final Tracer tracer;
+    private final TraceContextHolder traceContextHolder;
+
 
     public OllamaChatAgent(
             OllamaChatMemoryStore ollamaChatMemoryStore,
             StreamingChatModel streamingChatModel,
             SopTools sopTools,
-            MeterRegistry meterRegistry) {
+            MeterRegistry meterRegistry, Tracer tracer, TraceContextHolder traceContextHolder) {
 
         this.meterRegistry = meterRegistry;
         this.chatRequestCounter = Counter.builder("agentportal_chat_requests_total")
@@ -127,6 +133,8 @@ public class OllamaChatAgent {
         this.chatTimer = Timer.builder("agentportal_chat_latency")
                 .description("Chat end-to-end latency")
                 .register(meterRegistry);
+        this.tracer = tracer;
+        this.traceContextHolder = traceContextHolder;
 
         this.assistant = AiServices.builder(Assistant.class)
                 .streamingChatModel(streamingChatModel)
@@ -144,6 +152,11 @@ public class OllamaChatAgent {
         chatRequestCounter.increment();
         Timer.Sample sample = Timer.start(meterRegistry);
 
+        Span parentSpan = tracer.currentSpan();
+        traceContextHolder.put(conversationId, parentSpan);
+
+        log.info("Chat started, conversationId={}", conversationId);
+
         return Flux.<ServerSentEvent<String>>create(sink -> {
             try {
                 TokenStream tokenStream = assistant.chat(conversationId, systemMessage, userMessage);
@@ -159,6 +172,7 @@ public class OllamaChatAgent {
                             }
                         })
                         .beforeToolExecution(before -> {
+                            logWithSpan(parentSpan, () -> log.info("Starting call tool: {}", before.request().name()));
                             if (!sink.isCancelled()) {
                                 sink.next(
                                         ServerSentEvent.<String>builder()
@@ -169,6 +183,7 @@ public class OllamaChatAgent {
                             }
                         })
                         .onToolExecuted(toolExecution -> {
+                            logWithSpan(parentSpan, () -> log.info("Ending call tool: {}", toolExecution.request().name()));
                             if (!sink.isCancelled()) {
                                 sink.next(
                                         ServerSentEvent.<String>builder()
@@ -188,6 +203,7 @@ public class OllamaChatAgent {
                             }
                         })
                         .onCompleteResponse(response -> {
+                            logWithSpan(parentSpan, () -> log.info("Chat ended, conversationId={}", conversationId));
                             if (!sink.isCancelled()) {
                                 sink.next(
                                         ServerSentEvent.<String>builder()
@@ -199,7 +215,7 @@ public class OllamaChatAgent {
                             sample.stop(chatTimer);
                         })
                         .onError(error -> {
-                            log.error("Streaming chat failed", error);
+                            logWithSpan(parentSpan, () -> log.error("Streaming chat failed", error));
                             if (!sink.isCancelled()) {
                                 sink.next(
                                         ServerSentEvent.<String>builder()
@@ -216,5 +232,15 @@ public class OllamaChatAgent {
                 sink.error(e);
             }
         }, FluxSink.OverflowStrategy.BUFFER);
+    }
+
+    private void logWithSpan(Span span, Runnable action) {
+        if (span == null) {
+            action.run();
+            return;
+        }
+        try (Tracer.SpanInScope ignored = tracer.withSpan(span)) {
+            action.run();
+        }
     }
 }
