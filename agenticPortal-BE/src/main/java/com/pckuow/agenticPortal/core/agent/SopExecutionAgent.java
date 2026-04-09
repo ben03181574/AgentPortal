@@ -1,13 +1,17 @@
 package com.pckuow.agenticPortal.core.agent;
 
 import com.pckuow.agenticPortal.core.agent.memory.SopExecutionMemoryStore;
+import com.pckuow.agenticPortal.core.logging.TraceContextHolder;
 import com.pckuow.agenticPortal.tools.RefundMockTools;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.service.*;
+import io.micrometer.tracing.Span;
+import io.micrometer.tracing.Tracer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
+
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -73,17 +77,23 @@ public class SopExecutionAgent {
                 
                         Your goal is to correctly execute the current step and let the system control the workflow.
                 """)
-        Flux<String> execute(@MemoryId String conversationId,
+        TokenStream execute(@MemoryId String conversationId,
                              @V("sopCode") String sopCode,
                              @V("stepName") String stepName,
                              @V("stepDescription") String stepDescription,
                              @UserMessage String userMessage);
     }
 
+
+    private final Tracer tracer;
+    private final TraceContextHolder traceContextHolder;
+
     public SopExecutionAgent(
             SopExecutionMemoryStore sopExecutionMemoryStore,
             StreamingChatModel streamingChatModel,
-            RefundMockTools refundMockTools) {
+            RefundMockTools refundMockTools, Tracer tracer, TraceContextHolder traceContextHolder) {
+        this.tracer = tracer;
+        this.traceContextHolder = traceContextHolder;
         this.assistantSOP = AiServices.builder(AssistantSOP.class)
                 .streamingChatModel(streamingChatModel)
                 .chatMemoryProvider(
@@ -97,10 +107,46 @@ public class SopExecutionAgent {
     }
 
     public String execute(String conversationId, String sopCode, String stepName, String stepDescription, String userMessage) {
-        return Flux.defer(() -> assistantSOP.execute(conversationId, sopCode, stepName, stepDescription, userMessage))
-                .collectList()
-                .map(list -> String.join("", list))
-                .retry(3)
-                .block();
+        log.info("Starting to execute step: {}", stepName);
+
+        StringBuilder result = new StringBuilder();
+        CompletableFuture<String> future = new CompletableFuture<>();
+
+        Span parentSpan = tracer.currentSpan();
+        traceContextHolder.put(conversationId, parentSpan);
+
+        assistantSOP.execute(conversationId, sopCode, stepName, stepDescription, userMessage)
+                .beforeToolExecution(beforeToolExecution -> {
+                    logWithSpan(parentSpan, () -> log.info("Starting call tool: {}", beforeToolExecution.request().name()));
+                })
+                .onToolExecuted(toolExecution -> {
+                    logWithSpan(parentSpan, () -> log.info("Ending call tool: {}", toolExecution.request().name()));
+                })
+                .onPartialResponse(result::append)
+                .onCompleteResponse(response -> {
+                    logWithSpan(parentSpan, () -> {
+                        log.info("Completed step: {}", stepName);
+                        future.complete(result.toString());
+                    });
+                })
+                .onError(error -> {
+                    logWithSpan(parentSpan, () -> {
+                        log.error("Error while executing step: {}", stepName, error);
+                        future.completeExceptionally(error);
+                    });
+                })
+                .start();
+
+        return future.join();
+    }
+
+    private void logWithSpan(Span span, Runnable action) {
+        if (span == null) {
+            action.run();
+            return;
+        }
+        try (Tracer.SpanInScope ignored = tracer.withSpan(span)) {
+            action.run();
+        }
     }
 }

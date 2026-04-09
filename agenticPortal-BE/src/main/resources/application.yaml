@@ -16,7 +16,7 @@ spring:
       ddl-auto: update
 
   neo4j:
-    uri: bolt://localhost:7687
+    uri: bolt://localhost:17687
     authentication:
       username: neo4j
       password: neo4jpwd

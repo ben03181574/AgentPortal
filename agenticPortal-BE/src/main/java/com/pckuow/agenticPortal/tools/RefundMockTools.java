@@ -20,7 +20,7 @@ public class RefundMockTools {
             return "Order lookup failed: orderId must not be empty.";
         }
 
-        String result = """
+        return """
                 Order lookup success:
                 Order ID: %s
                 Order Status: PAID
@@ -28,7 +28,6 @@ public class RefundMockTools {
                 Order Amount: 1000
                 Refundable: YES
                 """.formatted(orderId);
-        return result;
     }
 
     @Tool("""
@@ -45,14 +44,12 @@ public class RefundMockTools {
 
         String normalized = reason.trim();
 
-        String result = """
+        return """
                 Refund reason validation success:
                 Refund Reason: %s
                 Validation Result: APPROVED
                 Note: This refund reason matches the mock validation rules.
                 """.formatted(normalized);
-
-        return result;
     }
 
     @Tool("""
@@ -73,15 +70,13 @@ public class RefundMockTools {
 
         String refundNo = "RF-" + System.currentTimeMillis();
 
-        String result = """
+        return """
                 Refund execution success:
                 Order ID: %s
                 Refund Reason: %s
                 Refund Transaction ID: %s
                 Refund Status: SUCCESS
                 """.formatted(orderId, reason, refundNo);
-
-        return result;
     }
 
     @Tool("""
@@ -95,13 +90,11 @@ public class RefundMockTools {
             return "Refund query failed: refundTransactionId must not be empty.";
         }
 
-        String result = """
+        return """
                 Refund query success:
                 Refund Transaction ID: %s
                 Refund Status: SUCCESS
                 Settlement Status: COMPLETED
                 """.formatted(refundTransactionId);
-
-        return result;
     }
 }
