@@ -14,7 +14,16 @@ services:
     volumes:
       - mariadb_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mariadb-admin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpwd"]
+      test:
+        [
+          "CMD",
+          "mariadb-admin",
+          "ping",
+          "-h",
+          "127.0.0.1",
+          "-uroot",
+          "-prootpwd",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -45,7 +54,7 @@ services:
       TZ: Asia/Taipei
     ports:
       - "7474:7474"
-      - "7687:7687"
+      - "17687:7687"
     volumes:
       - neo4j_data:/data
       - neo4j_logs:/logs
@@ -69,7 +78,11 @@ services:
     volumes:
       - chromadb_data:/data
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/api/v2/heartbeat || wget -qO- http://localhost:8000/api/v1/heartbeat || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:8000/api/v2/heartbeat || wget -qO- http://localhost:8000/api/v1/heartbeat || exit 1",
+        ]
       interval: 15s
       timeout: 10s
       retries: 20
@@ -100,7 +113,8 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      test:
+        ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 10

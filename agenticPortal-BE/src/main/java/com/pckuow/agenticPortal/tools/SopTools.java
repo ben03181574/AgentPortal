@@ -8,8 +8,6 @@ import com.pckuow.agenticPortal.sop.dao.SopGraphDAO;
 import com.pckuow.agenticPortal.sop.dto.SopStepDTO;
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolMemoryId;
-import io.micrometer.observation.Observation;
-import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.tracing.Span;
 import io.micrometer.tracing.Tracer;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +15,7 @@ import org.bsc.langgraph4j.*;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 @Component
@@ -108,7 +107,7 @@ public class SopTools {
             for (NodeOutput<SopState> r : result) {
                 sopResult = r.state().sopResult();
             }
-            log.info("=== [SopTools.executeSop] completed, sopCode={} ===", sopCode);
+
             return sopResult;
         }catch (Exception e) {
             childSpan.error(e);
@@ -119,7 +118,7 @@ public class SopTools {
     }
 
     private Span createChildSpan(Span parentSpan, String spanName) {
-        Span span = (parentSpan != null ? tracer.nextSpan(parentSpan) : tracer.nextSpan())
+        Span span = (Objects.requireNonNull(parentSpan != null ? tracer.nextSpan(parentSpan) : tracer.nextSpan()))
                 .name(spanName);
         return span.start();
     }
